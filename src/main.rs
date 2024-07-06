@@ -1,6 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+mod profile_manager;
+
+// use crate::profile_manager::profile::Profile;
 use eframe::egui;
+use egui::debug_text::print;
 
 fn main() -> eframe::Result {
     // env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -23,6 +27,7 @@ fn main() -> eframe::Result {
 #[derive(Default)]
 struct MyApp {
     profile_name: String,
+    github_username: String,
 }
 
 impl eframe::App for MyApp {
@@ -31,15 +36,18 @@ impl eframe::App for MyApp {
             ui.heading("Ferium Profile Manager");
             ui.horizontal(|ui| {
                 ui.label("Profile Name:");
-                ui.text_edit_singleline(&mut self.profile_name);
+                ui.label(&self.profile_name);
             });
-
+            ui.horizontal(|ui| {
+                ui.label("GitHub Username:");
+                ui.add(egui::TextEdit::singleline(&mut self.github_username));
+            });
             if ui.button("Save Profile").clicked() {
-                // Code to save profile
+                self.profile_name = self.github_username.clone();
             }
 
             if ui.button("Load Profile").clicked() {
-                // Code to load profile
+                // Implement loading a profile
             }
         });
     }
