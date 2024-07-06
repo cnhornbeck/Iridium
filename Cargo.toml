@@ -1,0 +1,15 @@
+[package]
+name = "FeriumManager"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+git2 = "^0.19"
+egui = "^0.28"
+eframe = "^0.28"
+egui_extras = { version = "^0.28.1", features = ["all_loaders"] }
+env_logger = { version = "0.11", default-features = false, features = [
+    "auto-color",
+    "humantime",
+] }
+log = "0.4.22"
