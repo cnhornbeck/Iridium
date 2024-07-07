@@ -1,6 +1,8 @@
-impl repo_content {
-    #[tokio::main]
-    async fn fetch_repo_contents() -> Result<(), Error> {
+use super::repo_content::RepoContent;
+use reqwest::Error;
+
+impl RepoContent {
+    pub async fn fetch_repo_contents() -> Result<String, Error> {
         let owner = "cnhornbeck";
         let repo = "MCModProfiles";
         let url = format!("https://api.github.com/repos/{}/{}/contents", owner, repo);
@@ -8,36 +10,42 @@ impl repo_content {
         let client = reqwest::Client::new();
         let res = client
             .get(&url)
-            .header("User-Agent", "request")
+            .header("User-Agent", "my-app")
             .send()
             .await?;
 
         let contents: Vec<RepoContent> = res.json().await?;
 
-        use std::iter::Iterator;
+        let files: Vec<RepoContent> = contents
+            .into_iter()
+            .filter(|item| matches!(item, RepoContent::File { .. }))
+            .collect();
 
-        let files: Vec<&RepoContent> = contents
-        .iter()
-        .filter(
-            |item| matches!(item, RepoContent::File {content_type,  ..} if content_type == "file"),
-        )
-        .collect();
+        let mut file_content = String::new();
 
-        for file in &files {
+        if let Some(first_file) = files.first() {
             if let RepoContent::File {
-                name,
                 download_url: Some(url),
                 ..
-            } = file
+            } = first_file
             {
-                println!("Fetching content for file: {}", name);
-                let file_content = fetch_file_content(&client, url).await?;
-                println!("Content of {}: \n{}", name, file_content);
+                let client = reqwest::Client::new();
+                file_content = fetch_file_content(&client, url).await?;
             }
         }
 
-        println!("Files: {:?}", files);
-
-        Ok(())
+        Ok(file_content)
     }
+}
+
+async fn fetch_file_content(client: &reqwest::Client, url: &str) -> Result<String, Error> {
+    let res = client
+        .get(url)
+        .header("User-Agent", "FeriumManager")
+        .send()
+        .await?
+        .error_for_status()?; // This will automatically handle non-success status codes
+
+    let content: String = res.text().await?;
+    Ok(content)
 }

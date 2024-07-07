@@ -1,9 +1,8 @@
-use reqwest::Error;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 #[serde(untagged)]
-enum RepoContent {
+pub enum RepoContent {
     File {
         name: String,
         path: String,
