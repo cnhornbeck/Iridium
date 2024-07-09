@@ -107,7 +107,7 @@
 // }
 
 use eframe::egui;
-use egui::{viewport, FontId, RichText, ViewportInfo};
+use egui::{vec2, FontId, RichText, Rounding, Shadow, Stroke, TextEdit, Ui, Window};
 use std::sync::{Arc, Mutex};
 
 fn main() -> Result<(), eframe::Error> {
@@ -129,7 +129,8 @@ fn main() -> Result<(), eframe::Error> {
 }
 #[derive(Default)]
 struct AppState {
-    left_value: f32,
+    import_string: String,
+    export_string: String,
 }
 
 struct MyApp {
@@ -147,26 +148,78 @@ impl MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let mut state = self.state.lock().unwrap();
-
-        let min_panel_width = 200.0; // Minimum width for the left panel
-
-        let min_width = ViewportInfo::default().monitor_size.unwrap().x / 2.0;
-        let min_height = ViewportInfo::default().monitor_size.unwrap().y / 2.0;
+        let fixed_size = vec2(200.0, 350.0);
 
         egui::SidePanel::left("left_panel")
-            .min_width(min_panel_width)
-            .max_width(ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 2.0)
-            .resizable(true)
+            .exact_width(ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 2.0)
+            .resizable(false)
             .show(ctx, |ui| {
-                ui.heading("Left Panel");
-                ui.add(egui::Slider::new(&mut state.left_value, 0.0..=100.0).text("Value"));
-                if ui.button("Increment").clicked() {
-                    state.left_value += 1.0;
-                }
+                ui.vertical_centered(|ui| {
+                    ui.heading(RichText::new("Command Center").font(FontId::proportional(25.0)));
+                });
+
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    Ui::add_space(ui, 5.0);
+
+                    if ui.button("Import").clicked() {
+                        state.import_string = "This is a test import string".to_string();
+                    }
+
+                    Ui::add_space(
+                        ui,
+                        ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
+                            + (ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
+                                - fixed_size.x)
+                                / 2.0
+                            - 60.0,
+                    );
+
+                    if ui.button("Export").clicked() {
+                        state.export_string = "This is a test export string".to_string();
+                    }
+                });
+
+                ui.horizontal(|ui| {
+                    ui.style_mut().visuals.window_shadow = Shadow::NONE;
+                    ui.style_mut().visuals.window_rounding = Rounding::ZERO;
+                    ui.style_mut().visuals.window_stroke = Stroke::NONE;
+                    ctx.set_style(ui.style().clone());
+                    Window::new("Import")
+                        .movable(false)
+                        .open(&mut true)
+                        .current_pos(egui::Pos2::new(ui.next_widget_position().x, 65.0))
+                        .fixed_size(fixed_size)
+                        .resizable(false)
+                        .title_bar(false)
+                        .vscroll(true)
+                        .show(ctx, |ui| {
+                            ui.label("This is a test label");
+                        });
+
+                    Window::new("Export")
+                        .movable(false)
+                        .open(&mut true)
+                        .current_pos(egui::Pos2::new(
+                            ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
+                                + (ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
+                                    - fixed_size.x)
+                                    / 2.0,
+                            65.0,
+                        ))
+                        .fixed_size(fixed_size)
+                        .resizable(false)
+                        .title_bar(false)
+                        .vscroll(true)
+                        .show(ctx, |ui| {
+                            ui.add(TextEdit::multiline(&mut "my lines\n".repeat(100)));
+                        });
+                });
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label(RichText::new("Coming Soon!").font(FontId::proportional(40.0)));
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new("Coming Soon!").font(FontId::proportional(40.0)));
+            });
         });
     }
 }
