@@ -107,69 +107,66 @@
 // }
 
 use eframe::egui;
+use egui::{viewport, FontId, RichText, ViewportInfo};
 use std::sync::{Arc, Mutex};
-use std::thread;
-
-#[derive(Default)]
-struct AppState {
-    query_result: Option<Vec<String>>,
-    is_loading: bool,
-}
 
 fn main() -> Result<(), eframe::Error> {
-    let options = eframe::NativeOptions::default();
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_min_inner_size([960.0, 540.0])
+            .with_position([0.0, 0.0]),
+
+        ..Default::default()
+    };
     eframe::run_native(
         "My egui App",
         options,
         Box::new(|_cc| {
-            let state = Arc::new(Mutex::new(AppState::default()));
-            Ok(Box::new(MyEguiApp::new(state)))
+            // let state = Arc::new(Mutex::new(AppState::default()));
+            Ok(Box::new(MyApp::new()))
         }),
     )
 }
+#[derive(Default)]
+struct AppState {
+    left_value: f32,
+}
 
-struct MyEguiApp {
+struct MyApp {
     state: Arc<Mutex<AppState>>,
 }
 
-impl MyEguiApp {
-    fn new(state: Arc<Mutex<AppState>>) -> Self {
-        Self { state }
+impl MyApp {
+    fn new() -> Self {
+        Self {
+            state: Arc::new(Mutex::new(AppState::default())),
+        }
     }
 }
 
-impl eframe::App for MyEguiApp {
+impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            let mut state = self.state.lock().unwrap();
+        let mut state = self.state.lock().unwrap();
 
-            if !state.is_loading
-                && state.query_result.is_none()
-                && ui.button("Start Query").clicked()
-            {
-                state.is_loading = true;
-                let state_clone = self.state.clone();
-                thread::spawn(move || {
-                    // Simulate a long-running query
-                    thread::sleep(std::time::Duration::from_secs(1));
-                    let result = vec!["mod1".to_string(), "mod2".to_string()];
-                    let mut state = state_clone.lock().unwrap();
-                    state.query_result = Some(result);
-                    state.is_loading = false;
-                });
-            }
+        let min_panel_width = 200.0; // Minimum width for the left panel
 
-            if state.is_loading {
-                ui.label("Loading...");
-            } else if let Some(result) = &state.query_result {
-                ui.label("Query Result:");
-                for mod_id in result {
-                    ui.label(mod_id);
+        let min_width = ViewportInfo::default().monitor_size.unwrap().x / 2.0;
+        let min_height = ViewportInfo::default().monitor_size.unwrap().y / 2.0;
+
+        egui::SidePanel::left("left_panel")
+            .min_width(min_panel_width)
+            .max_width(ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 2.0)
+            .resizable(true)
+            .show(ctx, |ui| {
+                ui.heading("Left Panel");
+                ui.add(egui::Slider::new(&mut state.left_value, 0.0..=100.0).text("Value"));
+                if ui.button("Increment").clicked() {
+                    state.left_value += 1.0;
                 }
-            }
-        });
+            });
 
-        // Request a repaint on each frame to handle updates from the background thread
-        ctx.request_repaint();
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.label(RichText::new("Coming Soon!").font(FontId::proportional(40.0)));
+        });
     }
 }
