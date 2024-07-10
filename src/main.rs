@@ -1,7 +1,5 @@
 // #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-// mod github_integration;
-// mod profile_manager;
 // use eframe::egui;
 // use profile_manager::profile::Profile;
 // use std::sync::Arc;
@@ -106,8 +104,13 @@
 //     }
 // }
 
-use eframe::egui;
-use egui::{vec2, FontId, RichText, Rounding, Shadow, Stroke, TextEdit, Ui, Window};
+#![windows_subsystem = "windows"]
+
+mod github_integration;
+mod profile_manager;
+use eframe::{egui, App, Frame};
+use egui::{Context, FontId, Pos2, RichText, Rounding, Shadow, Stroke, TextEdit, Window};
+use profile_manager::profile::Profile;
 use std::sync::{Arc, Mutex};
 
 fn main() -> Result<(), eframe::Error> {
@@ -131,6 +134,7 @@ fn main() -> Result<(), eframe::Error> {
 struct AppState {
     import_string: String,
     export_string: String,
+    debug_string: String,
 }
 
 struct MyApp {
@@ -145,77 +149,149 @@ impl MyApp {
     }
 }
 
-impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+impl App for MyApp {
+    fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
         let mut state = self.state.lock().unwrap();
-        let fixed_size = vec2(200.0, 350.0);
+        let fixed_size = egui::vec2(200.0, 200.0);
+
+        self.render_left_panel(ctx, &mut state, fixed_size);
+        self.render_central_panel(ctx);
+    }
+}
+
+impl MyApp {
+    fn render_left_panel(&self, ctx: &Context, state: &mut AppState, fixed_size: egui::Vec2) {
+        let panel_width = ctx.input(|i| i.screen_rect().width()) / 2.0;
 
         egui::SidePanel::left("left_panel")
-            .exact_width(ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 2.0)
+            .exact_width(panel_width)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.heading(RichText::new("Command Center").font(FontId::proportional(25.0)));
-                });
-
-                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                    Ui::add_space(ui, 5.0);
-
-                    if ui.button("Import").clicked() {
-                        state.import_string = "This is a test import string".to_string();
-                    }
-
-                    Ui::add_space(
-                        ui,
-                        ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
-                            + (ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
-                                - fixed_size.x)
-                                / 2.0
-                            - 60.0,
-                    );
-
-                    if ui.button("Export").clicked() {
-                        state.export_string = "This is a test export string".to_string();
-                    }
-                });
-
-                ui.horizontal(|ui| {
-                    ui.style_mut().visuals.window_shadow = Shadow::NONE;
-                    ui.style_mut().visuals.window_rounding = Rounding::ZERO;
-                    ui.style_mut().visuals.window_stroke = Stroke::NONE;
-                    ctx.set_style(ui.style().clone());
-                    Window::new("Import")
-                        .movable(false)
-                        .open(&mut true)
-                        .current_pos(egui::Pos2::new(ui.next_widget_position().x, 65.0))
-                        .fixed_size(fixed_size)
-                        .resizable(false)
-                        .title_bar(false)
-                        .vscroll(true)
-                        .show(ctx, |ui| {
-                            ui.label("This is a test label");
-                        });
-
-                    Window::new("Export")
-                        .movable(false)
-                        .open(&mut true)
-                        .current_pos(egui::Pos2::new(
-                            ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
-                                + (ctx.input(|i: &egui::InputState| i.screen_rect()).width() / 4.0
-                                    - fixed_size.x)
-                                    / 2.0,
-                            65.0,
-                        ))
-                        .fixed_size(fixed_size)
-                        .resizable(false)
-                        .title_bar(false)
-                        .vscroll(true)
-                        .show(ctx, |ui| {
-                            ui.add(TextEdit::multiline(&mut "my lines\n".repeat(100)));
-                        });
-                });
+                self.render_panel_header(ui);
+                self.render_import_export_buttons(ctx, ui, state);
+                self.render_windows(ctx, ui, fixed_size, panel_width, state);
             });
+    }
 
+    fn render_panel_header(&self, ui: &mut egui::Ui) {
+        ui.vertical_centered(|ui| {
+            ui.heading(RichText::new("Command Center").font(FontId::proportional(25.0)));
+        });
+    }
+
+    fn render_import_export_buttons(&self, ctx: &Context, ui: &mut egui::Ui, state: &mut AppState) {
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+            ui.add_space(5.0);
+
+            if ui.button("Import").clicked() {
+                match Profile::import_mods(&state.import_string, &mut state.debug_string) {
+                    Ok(_) => println!(
+                        "All mods imported successfully. Last operation: {}",
+                        state.debug_string
+                    ),
+                    Err(e) => {
+                        eprintln!("Errors occurred during import: {}", e);
+                        println!("Last operation: {}", state.debug_string);
+                    }
+                }
+            }
+
+            let spacing = ctx.input(|i| i.screen_rect().width()) / 4.0 - 60.0;
+            ui.add_space(spacing);
+
+            if ui.button("Export").clicked() {
+                state.export_string = "This is a test export string".to_string();
+            }
+        });
+    }
+
+    fn render_windows(
+        &self,
+        ctx: &Context,
+        ui: &mut egui::Ui,
+        fixed_size: egui::Vec2,
+        panel_width: f32,
+        state: &mut AppState,
+    ) {
+        ui.horizontal(|ui| {
+            self.set_window_style(ctx, ui);
+            self.render_export_window(ctx, ui, fixed_size, state, panel_width);
+            self.render_debug_window(ctx, ui, fixed_size, state);
+            self.render_import_window(ctx, ui, fixed_size, state);
+        });
+    }
+
+    fn set_window_style(&self, ctx: &Context, ui: &mut egui::Ui) {
+        ui.style_mut().visuals.window_shadow = Shadow::NONE;
+        ui.style_mut().visuals.window_rounding = Rounding::ZERO;
+        ui.style_mut().visuals.window_stroke = Stroke::NONE;
+        ctx.set_style(ui.style().clone());
+    }
+
+    fn render_export_window(
+        &self,
+        ctx: &Context,
+        ui: &mut egui::Ui,
+        fixed_size: egui::Vec2,
+        state: &mut AppState,
+        panel_width: f32,
+    ) {
+        let x_pos = panel_width / 2.0 + (panel_width / 2.0 - fixed_size.x) / 2.0;
+
+        Window::new("Export")
+            .movable(false)
+            .open(&mut true)
+            .current_pos(Pos2::new(x_pos, 60.0))
+            .fixed_size(fixed_size)
+            .resizable(false)
+            .title_bar(false)
+            .vscroll(true)
+            .show(ctx, |ui| {
+                ui.label(state.export_string.clone());
+            });
+    }
+
+    fn render_import_window(
+        &self,
+        ctx: &Context,
+        ui: &mut egui::Ui,
+        fixed_size: egui::Vec2,
+        state: &mut AppState,
+    ) {
+        Window::new("Import")
+            .movable(false)
+            .open(&mut true)
+            .current_pos(Pos2::new(6.0, 60.0))
+            .fixed_size(fixed_size)
+            .resizable(false)
+            .title_bar(false)
+            .vscroll(true)
+            .show(ctx, |ui| {
+                ui.add(TextEdit::multiline(&mut state.import_string));
+            });
+    }
+
+    fn render_debug_window(
+        &self,
+        ctx: &Context,
+        ui: &mut egui::Ui,
+        fixed_size: egui::Vec2,
+        state: &mut AppState,
+    ) {
+        Window::new("Debug")
+            .movable(false)
+            .open(&mut true)
+            .current_pos(Pos2::new(6.0, 265.0))
+            .fixed_size(fixed_size)
+            .resizable(false)
+            .title_bar(false)
+            .vscroll(true)
+            .show(ctx, |ui| {
+                ui.label(state.debug_string.clone());
+            });
+    }
+
+    fn render_central_panel(&self, ctx: &Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical_centered(|ui| {
                 ui.label(RichText::new("Coming Soon!").font(FontId::proportional(40.0)));
