@@ -17,7 +17,7 @@ impl Profile {
         cmd.creation_flags(CREATE_NO_WINDOW);
 
         for line in import_string.lines() {
-            println!("Importing mod: {}", line);
+            // println!("Importing mod: {}", line);
 
             cmd.arg("add").arg(line);
 
@@ -43,7 +43,7 @@ impl Profile {
                 temp_debug = error_msg;
             } else {
                 let success_message = String::from_utf8_lossy(&output.stdout);
-                println!("Success: {}", success_message);
+                // println!("Success: {}", success_message);
                 temp_debug = format!("Successfully imported mod: {}", line);
             }
         }

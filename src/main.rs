@@ -1,301 +1,216 @@
-// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+use std::{error::Error, time::Duration};
 
-// use eframe::egui;
-// use profile_manager::profile::Profile;
-// use std::sync::Arc;
-// use tokio::runtime::Runtime;
+use argh::FromArgs;
 
-// fn main() -> eframe::Result {
-//     let options = eframe::NativeOptions {
-//         viewport: egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
-//         ..Default::default()
-//     };
-//     eframe::run_native(
-//         "Ferium Profile Manager",
-//         options,
-//         Box::new(|cc| {
-//             // This gives us image support:
-//             egui_extras::install_image_loaders(&cc.egui_ctx);
+mod app;
 
-//             Ok(Box::<MyApp>::default())
-//         }),
-//     )
+mod crossterm;
+
+mod ui;
+
+mod profile_manager;
+
+mod github_integration;
+
+/// Demo
+#[derive(Debug, FromArgs)]
+struct Cli {
+    /// time in ms between two ticks.
+    #[argh(option, default = "10")]
+    tick_rate: u64,
+    /// whether unicode symbols are used to improve the overall look of the app
+    #[argh(option, default = "true")]
+    enhanced_graphics: bool,
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let cli: Cli = argh::from_env();
+    let tick_rate = Duration::from_millis(cli.tick_rate);
+    crate::crossterm::run(tick_rate, cli.enhanced_graphics)?;
+
+    Ok(())
+}
+
+// This example is taken from https://raw.githubusercontent.com/fdehau/tui-rs/master/examples/user_input.rs
+// use crossterm::{
+//     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+//     execute,
+//     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+// };
+// use ratatui::{
+//     backend::{Backend, CrosstermBackend},
+//     layout::{Constraint, Direction, Layout},
+//     style::{Color, Modifier, Style},
+//     text::{Line, Span, Text},
+//     widgets::{Block, Borders, List, ListItem, Paragraph},
+//     Frame, Terminal,
+// };
+// use std::{error::Error, io};
+// use tui_input::backend::crossterm::EventHandler;
+// use tui_input::Input;
+
+// enum InputMode {
+//     Normal,
+//     Editing,
 // }
 
-// #[derive(Default)]
-// struct MyApp {
-//     profile_name: String,
-//     github_username: String,
-//     load_profile_output: String,
-//     profile: Option<Profile>,
+// /// App holds the state of the application
+// struct App {
+//     /// Current value of the input box
+//     input: Input,
+//     /// Current input mode
+//     input_mode: InputMode,
+//     /// History of recorded messages
+//     messages: Vec<String>,
 // }
 
-// impl eframe::App for MyApp {
-//     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-//         let rt = Arc::new(Runtime::new().unwrap());
-
-//         egui::CentralPanel::default().show(ctx, |ui| {
-//             ui.heading("Ferium Profile Manager");
-//             ui.horizontal(|ui| {
-//                 ui.label("Profile Name:");
-//                 ui.text_edit_singleline(&mut self.profile_name);
-//             });
-//             ui.horizontal(|ui| {
-//                 ui.label("GitHub Username:");
-//                 ui.text_edit_singleline(&mut self.github_username);
-//             });
-//             if ui.button("Save Profile").clicked() {
-//                 let profile_name = self.profile_name.clone();
-//                 let rt_clone = rt.clone();
-//                 let profile = self.profile.clone();
-
-//                 rt.spawn(async move {
-//                     if let Some(prof) = profile {
-//                         match prof.save_profile().await {
-//                             Ok(output) => {
-//                                 // Update the profile_name with the saved output
-//                                 // You'll need to use a mutex or channel to update the UI safely
-//                             }
-//                             Err(e) => {
-//                                 eprintln!("Error saving profile: {}", e);
-//                             }
-//                         }
-//                     } else {
-//                         let new_profile = Profile::new(profile_name, vec![]);
-//                         match new_profile.save_profile().await {
-//                             Ok(output) => {
-//                                 // Update the UI safely
-//                             }
-//                             Err(e) => {
-//                                 eprintln!("Error saving new profile: {}", e);
-//                             }
-//                         }
-//                     }
-//                 });
-//             }
-
-//             ui.vertical(|ui| {
-//                 ui.label("This will load the profile from the local system");
-//                 ui.horizontal(|ui| {
-//                     if ui.button("Load Profile").clicked() {
-//                         let rt_clone = rt.clone();
-//                         rt.spawn(async move {
-//                             match Profile::load_profile().await {
-//                                 Ok(output) => {
-//                                     // Update the UI safely
-//                                 }
-//                                 Err(e) => {
-//                                     eprintln!("Error loading profile: {}", e);
-//                                 }
-//                             }
-//                         });
-//                     };
-//                     ui.label(&self.load_profile_output);
-//                     ui.separator();
-//                 });
-//             });
-
-//             // Display current profile information if available
-//             if let Some(profile) = &self.profile {
-//                 ui.label(format!("Current Profile: {}", profile.name));
-//                 ui.label(format!("Number of mods: {}", profile.mods.len()));
-//             }
-//         });
+// impl Default for App {
+//     fn default() -> App {
+//         App {
+//             input: Input::default(),
+//             input_mode: InputMode::Normal,
+//             messages: Vec::new(),
+//         }
 //     }
 // }
 
-#![windows_subsystem = "windows"]
+// fn main() -> Result<(), Box<dyn Error>> {
+//     // setup terminal
+//     enable_raw_mode()?;
+//     let mut stdout = io::stdout();
+//     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+//     let backend = CrosstermBackend::new(stdout);
+//     let mut terminal = Terminal::new(backend)?;
 
-mod github_integration;
-mod profile_manager;
-use eframe::{egui, App, Frame};
-use egui::{Context, FontId, Pos2, RichText, Rounding, Shadow, Stroke, TextEdit, Window};
-use profile_manager::profile::Profile;
-use std::sync::{Arc, Mutex};
+//     // create app and run it
+//     let app = App::default();
+//     let res = run_app(&mut terminal, app);
 
-fn main() -> Result<(), eframe::Error> {
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_min_inner_size([960.0, 540.0])
-            .with_position([0.0, 0.0]),
+//     // restore terminal
+//     disable_raw_mode()?;
+//     execute!(
+//         terminal.backend_mut(),
+//         LeaveAlternateScreen,
+//         DisableMouseCapture
+//     )?;
+//     terminal.show_cursor()?;
 
-        ..Default::default()
-    };
-    eframe::run_native(
-        "My egui App",
-        options,
-        Box::new(|_cc| {
-            // let state = Arc::new(Mutex::new(AppState::default()));
-            Ok(Box::new(MyApp::new()))
-        }),
-    )
-}
-#[derive(Default)]
-struct AppState {
-    import_string: String,
-    export_string: String,
-    debug_string: String,
-}
+//     if let Err(err) = res {
+//         println!("{:?}", err)
+//     }
 
-struct MyApp {
-    state: Arc<Mutex<AppState>>,
-}
+//     Ok(())
+// }
 
-impl MyApp {
-    fn new() -> Self {
-        Self {
-            state: Arc::new(Mutex::new(AppState::default())),
-        }
-    }
-}
+// fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+//     loop {
+//         terminal.draw(|f| ui(f, &app))?;
 
-impl App for MyApp {
-    fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-        let mut state = self.state.lock().unwrap();
-        let fixed_size = egui::vec2(200.0, 200.0);
+//         if let Event::Key(key) = event::read()? {
+//             match app.input_mode {
+//                 InputMode::Normal => match key.code {
+//                     KeyCode::Char('e') => {
+//                         app.input_mode = InputMode::Editing;
+//                     }
+//                     KeyCode::Char('q') => {
+//                         return Ok(());
+//                     }
+//                     _ => {}
+//                 },
+//                 InputMode::Editing => match key.code {
+//                     KeyCode::Enter => {
+//                         app.messages.push(app.input.value().into());
+//                         app.input.reset();
+//                     }
+//                     KeyCode::Esc => {
+//                         app.input_mode = InputMode::Normal;
+//                     }
+//                     _ => {
+//                         app.input.handle_event(&Event::Key(key));
+//                     }
+//                 },
+//             }
+//         }
+//     }
+// }
 
-        self.render_left_panel(ctx, &mut state, fixed_size);
-        self.render_central_panel(ctx);
-    }
-}
+// fn ui(f: &mut Frame, app: &App) {
+//     let chunks = Layout::default()
+//         .direction(Direction::Vertical)
+//         .margin(2)
+//         .constraints(
+//             [
+//                 Constraint::Length(1),
+//                 Constraint::Length(3),
+//                 Constraint::Min(1),
+//             ]
+//             .as_ref(),
+//         )
+//         .split(f.size());
 
-impl MyApp {
-    fn render_left_panel(&self, ctx: &Context, state: &mut AppState, fixed_size: egui::Vec2) {
-        let panel_width = ctx.input(|i| i.screen_rect().width()) / 2.0;
+//     let (msg, style) = match app.input_mode {
+//         InputMode::Normal => (
+//             vec![
+//                 Span::raw("Press "),
+//                 Span::styled("q", Style::default().add_modifier(Modifier::BOLD)),
+//                 Span::raw(" to exit, "),
+//                 Span::styled("e", Style::default().add_modifier(Modifier::BOLD)),
+//                 Span::raw(" to start editing."),
+//             ],
+//             Style::default().add_modifier(Modifier::RAPID_BLINK),
+//         ),
+//         InputMode::Editing => (
+//             vec![
+//                 Span::raw("Press "),
+//                 Span::styled("Esc", Style::default().add_modifier(Modifier::BOLD)),
+//                 Span::raw(" to stop editing, "),
+//                 Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
+//                 Span::raw(" to record the message"),
+//             ],
+//             Style::default(),
+//         ),
+//     };
+//     let text = Text::from(Line::from(msg)).style(style);
+//     let help_message = Paragraph::new(text);
+//     f.render_widget(help_message, chunks[0]);
 
-        egui::SidePanel::left("left_panel")
-            .exact_width(panel_width)
-            .resizable(false)
-            .show(ctx, |ui| {
-                self.render_panel_header(ui);
-                self.render_import_export_buttons(ctx, ui, state);
-                self.render_windows(ctx, ui, fixed_size, panel_width, state);
-            });
-    }
+//     let width = chunks[0].width.max(3) - 3; // keep 2 for borders and 1 for cursor
 
-    fn render_panel_header(&self, ui: &mut egui::Ui) {
-        ui.vertical_centered(|ui| {
-            ui.heading(RichText::new("Command Center").font(FontId::proportional(25.0)));
-        });
-    }
+//     let scroll = app.input.visual_scroll(width as usize);
+//     let input = Paragraph::new(app.input.value())
+//         .style(match app.input_mode {
+//             InputMode::Normal => Style::default(),
+//             InputMode::Editing => Style::default().fg(Color::Yellow),
+//         })
+//         .scroll((0, scroll as u16))
+//         .block(Block::default().borders(Borders::ALL).title("Input"));
+//     f.render_widget(input, chunks[1]);
+//     match app.input_mode {
+//         InputMode::Normal =>
+//             // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
+//             {}
 
-    fn render_import_export_buttons(&self, ctx: &Context, ui: &mut egui::Ui, state: &mut AppState) {
-        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-            ui.add_space(5.0);
+//         InputMode::Editing => {
+//             // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+//             f.set_cursor(
+//                 // Put cursor past the end of the input text
+//                 chunks[1].x + ((app.input.visual_cursor()).max(scroll) - scroll) as u16 + 1,
+//                 // Move one line down, from the border to the input line
+//                 chunks[1].y + 1,
+//             )
+//         }
+//     }
 
-            if ui.button("Import").clicked() {
-                match Profile::import_mods(&state.import_string, &mut state.debug_string) {
-                    Ok(_) => println!(
-                        "All mods imported successfully. Last operation: {}",
-                        state.debug_string
-                    ),
-                    Err(e) => {
-                        eprintln!("Errors occurred during import: {}", e);
-                        println!("Last operation: {}", state.debug_string);
-                    }
-                }
-            }
-
-            let spacing = ctx.input(|i| i.screen_rect().width()) / 4.0 - 60.0;
-            ui.add_space(spacing);
-
-            if ui.button("Export").clicked() {
-                state.export_string = "This is a test export string".to_string();
-            }
-        });
-    }
-
-    fn render_windows(
-        &self,
-        ctx: &Context,
-        ui: &mut egui::Ui,
-        fixed_size: egui::Vec2,
-        panel_width: f32,
-        state: &mut AppState,
-    ) {
-        ui.horizontal(|ui| {
-            self.set_window_style(ctx, ui);
-            self.render_export_window(ctx, ui, fixed_size, state, panel_width);
-            self.render_debug_window(ctx, ui, fixed_size, state);
-            self.render_import_window(ctx, ui, fixed_size, state);
-        });
-    }
-
-    fn set_window_style(&self, ctx: &Context, ui: &mut egui::Ui) {
-        ui.style_mut().visuals.window_shadow = Shadow::NONE;
-        ui.style_mut().visuals.window_rounding = Rounding::ZERO;
-        ui.style_mut().visuals.window_stroke = Stroke::NONE;
-        ctx.set_style(ui.style().clone());
-    }
-
-    fn render_export_window(
-        &self,
-        ctx: &Context,
-        ui: &mut egui::Ui,
-        fixed_size: egui::Vec2,
-        state: &mut AppState,
-        panel_width: f32,
-    ) {
-        let x_pos = panel_width / 2.0 + (panel_width / 2.0 - fixed_size.x) / 2.0;
-
-        Window::new("Export")
-            .movable(false)
-            .open(&mut true)
-            .current_pos(Pos2::new(x_pos, 60.0))
-            .fixed_size(fixed_size)
-            .resizable(false)
-            .title_bar(false)
-            .vscroll(true)
-            .show(ctx, |ui| {
-                ui.label(state.export_string.clone());
-            });
-    }
-
-    fn render_import_window(
-        &self,
-        ctx: &Context,
-        ui: &mut egui::Ui,
-        fixed_size: egui::Vec2,
-        state: &mut AppState,
-    ) {
-        Window::new("Import")
-            .movable(false)
-            .open(&mut true)
-            .current_pos(Pos2::new(6.0, 60.0))
-            .fixed_size(fixed_size)
-            .resizable(false)
-            .title_bar(false)
-            .vscroll(true)
-            .show(ctx, |ui| {
-                ui.add(TextEdit::multiline(&mut state.import_string));
-            });
-    }
-
-    fn render_debug_window(
-        &self,
-        ctx: &Context,
-        ui: &mut egui::Ui,
-        fixed_size: egui::Vec2,
-        state: &mut AppState,
-    ) {
-        Window::new("Debug")
-            .movable(false)
-            .open(&mut true)
-            .current_pos(Pos2::new(6.0, 265.0))
-            .fixed_size(fixed_size)
-            .resizable(false)
-            .title_bar(false)
-            .vscroll(true)
-            .show(ctx, |ui| {
-                ui.label(state.debug_string.clone());
-            });
-    }
-
-    fn render_central_panel(&self, ctx: &Context) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.label(RichText::new("Coming Soon!").font(FontId::proportional(40.0)));
-            });
-        });
-    }
-}
+//     let messages: Vec<ListItem> = app
+//         .messages
+//         .iter()
+//         .enumerate()
+//         .map(|(i, m)| {
+//             let content = vec![Line::from(Span::raw(format!("{}: {}", i, m)))];
+//             ListItem::new(content)
+//         })
+//         .collect();
+//     let messages =
+//         List::new(messages).block(Block::default().borders(Borders::ALL).title("Messages"));
+//     f.render_widget(messages, chunks[2]);
+// }
