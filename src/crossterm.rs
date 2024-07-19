@@ -26,7 +26,7 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn E
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let app = App::new("Crossterm Demo", enhanced_graphics);
+    let app = App::new("Iridium", enhanced_graphics);
     let res = run_app(&mut terminal, app, tick_rate);
 
     // restore terminal
