@@ -1,11 +1,11 @@
 # Iridium
 
-Iridium is a terminal-based user interface (TUI) written in Rust and designed to enhance the functionality of Ferium, the Minecraft mod manager. Iridium allows users to easily import and export large numbers of mods and create their own modpacks. This project aims to streamline the management of Minecraft mods through an intuitive TUI.
+Iridium is a terminal-based user interface (TUI) written in Rust and designed to enhance the functionality of Ferium, the Minecraft mod manager. Iridium allows users to easily import and export large numbers of mods and create their own Iridium-based modpacks. This project aims to streamline the management of Minecraft mods through an intuitive TUI.
 
 ## Features
 
 - **Easy Import and Export:** Simplify the process of importing and exporting mods in bulk.
-- **Modpack Creation:** Create custom modpacks by reading from TXT and JSON files.
+- **Modpack Creation:** Create custom Iridium-based modpacks by reading from TXT and JSON files.
 - **User-Friendly Interface:** A terminal-based UI that enhances the usability of Ferium.
 
 ## Installation
@@ -42,7 +42,7 @@ etc...
 
 **TODO**
 
-### Create Modpack
+### Create Iridium-based Modpack
 
 **TODO**
 
