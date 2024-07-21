@@ -1,6 +1,6 @@
-# Indium
+# Iridium
 
-Indium is a terminal-based user interface (TUI) written in Rust and designed to enhance the functionality of Ferium, the Minecraft mod manager. Indium allows users to easily import and export large numbers of mods and create their own modpacks. This project aims to streamline the management of Minecraft mods through an intuitive TUI.
+Iridium is a terminal-based user interface (TUI) written in Rust and designed to enhance the functionality of Ferium, the Minecraft mod manager. Iridium allows users to easily import and export large numbers of mods and create their own modpacks. This project aims to streamline the management of Minecraft mods through an intuitive TUI.
 
 ## Features
 
@@ -10,12 +10,12 @@ Indium is a terminal-based user interface (TUI) written in Rust and designed to 
 
 ## Installation
 
-To get the latest version of Indium, download it from the [Releases](https://github.com/cnhornbeck/indium/releases) page. You can also build it from source if you prefer:
+To get the latest version of Iridium, download it from the [Releases](https://github.com/cnhornbeck/Iridium/releases) page. You can also build it from source if you prefer:
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/cnhornbeck/indium.git
-cd indium
+git clone https://github.com/cnhornbeck/iridium.git
+cd iridium
 ```
 
 2. **Build the project:**
@@ -25,11 +25,11 @@ cargo build --release
 
 ## Usage
 
-Once installed, you can start using Indium through the terminal. Below are some basic features:
+Once downloaded, open the application to begin. Below are some basic features:
 
 ### Import Mods
 
-To import mods, paste the mod IDs in the Import Input text box, with each mod ID separated by a new line. Then press `Ctrl+Enter` to submit the mods for download. Indium will automatically run `ferium upgrade` after all provided mods have been imported.
+To import mods, paste the mod IDs in the Import Input text box, with each mod ID separated by a new line. Then press `Ctrl+Enter` to submit the mods for download. Iridium will automatically run `ferium upgrade` after all provided mods have been imported.
 
 Example:
 
