@@ -20,8 +20,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         .highlight_style(Style::default().fg(Color::Yellow))
         .select(app.tabs.index);
     f.render_widget(tabs, chunks[0]);
-    if app.tabs.index == 0 {
-        draw_import_tab(f, app, chunks[1]);
+    match app.tabs.index {
+        0 => draw_import_tab(f, app, chunks[1]),
+        1 => draw_export_tab(f, app, chunks[1]),
+        _ => {}
     }
 }
 
@@ -54,16 +56,17 @@ fn draw_import_tab_body(f: &mut Frame, app: &mut App, area: Rect) {
         Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]).split(area);
     let chunks = Layout::vertical([
         Constraint::Length(1),
+        Constraint::Length(10),
         Constraint::Length(3),
-        Constraint::Min(1),
     ])
     .split(chunks[0]);
 
-    draw_help_message(f, app, chunks[0]);
-    draw_input(f, app, chunks[1]);
+    draw_import_help_message(f, app, chunks[0]);
+    draw_import_tab_input(f, app, chunks[1]);
+    draw_import_tab_debug_string(f, app, chunks[2]);
 }
 
-fn draw_help_message(f: &mut Frame, app: &mut App, area: Rect) {
+fn draw_import_help_message(f: &mut Frame, app: &mut App, area: Rect) {
     let (msg, style) = match app.input_mode {
         app::InputMode::Normal => (
             vec![
@@ -71,7 +74,7 @@ fn draw_help_message(f: &mut Frame, app: &mut App, area: Rect) {
                 Span::styled("q", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to exit app, "),
                 Span::styled("e", Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" to start editing."),
+                Span::raw(" to enter mod IDs."),
             ],
             Style::default().add_modifier(Modifier::RAPID_BLINK),
         ),
@@ -92,32 +95,109 @@ fn draw_help_message(f: &mut Frame, app: &mut App, area: Rect) {
     f.render_widget(help_message, area);
 }
 
-fn draw_input(f: &mut Frame, app: &mut App, area: Rect) {
-    let width = area.width.max(3) - 3; // keep 2 for borders and 1 for cursor
-    let scroll = app.input.visual_scroll(width as usize);
-    let input = Paragraph::new(app.input.value())
-        .style(match app.input_mode {
-            app::InputMode::Normal => Style::default(),
-            app::InputMode::Editing => Style::default().fg(Color::Yellow),
-        })
-        .scroll((0, scroll as u16))
-        .block(Block::default().borders(Borders::ALL).title("Input"));
-    f.render_widget(input, area);
+fn draw_import_tab_input(f: &mut Frame, app: &mut App, area: Rect) {
+    match app.input_mode {
+        app::InputMode::Normal => {
+            app.textarea
+                .set_block(Block::default().borders(Borders::ALL).title("Import Input"));
+        }
+        app::InputMode::Editing => {
+            app.textarea.set_block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(Style::default().fg(Color::Yellow))
+                    .title("Import Input"),
+            );
+        }
+    }
+
+    app.textarea.input(app.input.clone());
+
+    f.render_widget(app.textarea.widget(), area);
 
     match app.input_mode {
         app::InputMode::Normal => {
             // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
         }
         app::InputMode::Editing => {
-            // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
-            f.set_cursor(
-                // Put cursor past the end of the input text
-                area.x + ((app.input.visual_cursor()).max(scroll) - scroll) as u16 + 1,
-                // Move one line down, from the border to the input line
-                area.y + 1,
-            );
+            // // Make the cursor visible and ask tui-rs to put it at the specified coordinates after rendering
+            // f.set_cursor(
+            //     // Put cursor past the end of the input text
+            //     area.x + ((app.input.visual_cursor()).max(scroll) - scroll) as u16 + 1,
+            //     // Move one line down, from the border to the input line
+            //     area.y + 1,
+            // );
         }
     }
+}
+
+fn draw_import_tab_debug_string(f: &mut Frame, app: &App, area: Rect) {
+    let debug_string;
+    {
+        // Lock the debug_string and clone it within the scope
+        let debug_string_lock = app.debug_string.lock().unwrap();
+        debug_string = debug_string_lock.clone();
+    }
+
+    let paragraph = Paragraph::new(debug_string);
+    f.render_widget(paragraph, area);
+}
+
+fn draw_export_tab(f: &mut Frame, app: &mut App, area: Rect) {
+    let chunks = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).split(area);
+    draw_export_tab_header(f, chunks[0]);
+    draw_export_tab_body(f, app, chunks[1]);
+}
+
+fn draw_export_tab_header(f: &mut Frame, area: Rect) {
+    let export_tab_text = Paragraph::new("Export Mods")
+        .block(
+            Block::default()
+                .style(Style::default().bg(Color::Black))
+                .padding(Padding::new(
+                    0,               // left
+                    0,               // right
+                    area.height / 2, // top
+                    0,               // bottom
+                )),
+        )
+        .style(Style::default().fg(Color::White))
+        .alignment(Alignment::Center);
+
+    f.render_widget(export_tab_text, area);
+}
+
+fn draw_export_help_message(f: &mut Frame, area: Rect) {
+    let (msg, style) = (
+        vec![
+            Span::raw("Press "),
+            Span::styled("q", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(" to exit app, "),
+            Span::styled("e", Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(" copy mod IDs to clipboard."),
+        ],
+        Style::default().add_modifier(Modifier::RAPID_BLINK),
+    );
+
+    let text = Text::from(Line::from(msg)).style(style);
+    let help_message = Paragraph::new(text);
+    f.render_widget(help_message, area);
+}
+
+fn draw_export_tab_output(f: &mut Frame, app: &mut App, area: Rect) {
+    
+}
+
+fn draw_export_tab_body(f: &mut Frame, app: &mut App, area: Rect) {
+    let chunks = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Length(3),
+        Constraint::Min(1),
+    ])
+    .split(area);
+
+    draw_export_help_message(f, chunks[0]);
+    draw_export_tab_output(f, app, chunks[1]);
 }
 
 // fn draw_first_tab(f: &mut Frame, app: &mut App, area: Rect) {

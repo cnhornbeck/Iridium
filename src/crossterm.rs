@@ -1,9 +1,6 @@
-use std::{
-    error::Error,
-    io,
-    time::{Duration, Instant},
-};
+use std::{error::Error, io, time::Duration};
 
+use crossterm::event::KeyModifiers;
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     crossterm::{
@@ -17,7 +14,7 @@ use ratatui::{
 use crate::app::{self, App};
 use crate::ui;
 
-pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn Error>> {
+pub fn run() -> Result<(), Box<dyn Error>> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -26,8 +23,8 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn E
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let app = App::new("Iridium", enhanced_graphics);
-    let res = run_app(&mut terminal, app, tick_rate);
+    let app = App::new("Iridium");
+    let res = run_app(&mut terminal, app);
 
     // restore terminal
     disable_raw_mode()?;
@@ -45,54 +42,46 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn E
     Ok(())
 }
 
-fn run_app<B: Backend>(
-    terminal: &mut Terminal<B>,
-    mut app: App,
-    tick_rate: Duration,
-) -> io::Result<()> {
-    let mut last_tick = Instant::now();
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
     loop {
         terminal.draw(|f| ui::draw(f, &mut app))?;
 
-        let timeout = tick_rate.saturating_sub(last_tick.elapsed());
-        if crossterm::event::poll(timeout)? {
+        if event::poll(Duration::from_millis(250))? {
             if let Event::Key(key) = event::read()? {
                 match app.input_mode {
                     app::InputMode::Normal => {
                         if key.kind == KeyEventKind::Press {
-                            match key.code {
-                                KeyCode::Enter => app.on_enter(),
-                                KeyCode::Left => app.on_left(),
-                                KeyCode::Up => app.on_up(),
-                                KeyCode::Right => app.on_right(),
-                                KeyCode::Down => app.on_down(),
-                                KeyCode::Tab => app.on_tab(),
-                                KeyCode::Esc => app.on_esc(),
-                                KeyCode::Char(c) => app.on_key(c),
-                                _ => {}
-                            }
+                            handle_normal_mode(&mut app, key.code);
                         }
                     }
-                    app::InputMode::Editing => {
-                        app.handle_text_edit_input(key);
-                        if key.kind == KeyEventKind::Press {
-                            match key.code {
-                                KeyCode::Enter => app.on_enter(),
-                                KeyCode::Esc => app.on_esc(),
-                                KeyCode::Tab => app.on_tab(),
-                                _ => {}
-                            }
-                        }
-                    }
+                    app::InputMode::Editing => handle_editing_mode(&mut app, key),
                 }
             }
         }
 
-        if last_tick.elapsed() >= tick_rate {
-            last_tick = Instant::now();
-        }
         if app.should_quit {
             return Ok(());
         }
+    }
+}
+
+fn handle_normal_mode(app: &mut App, key_code: KeyCode) {
+    match key_code {
+        // KeyCode::Enter => app.on_enter(),
+        KeyCode::Left => app.on_left(),
+        KeyCode::Right => app.on_right(),
+        KeyCode::Tab => app.on_tab(),
+        KeyCode::Esc => app.on_esc(),
+        KeyCode::Char(c) => app.on_key(c),
+        _ => {}
+    }
+}
+
+fn handle_editing_mode(app: &mut App, key: event::KeyEvent) {
+    match (key.code, key.modifiers, key.kind) {
+        (KeyCode::Enter, KeyModifiers::CONTROL, KeyEventKind::Press) => app.on_enter(),
+        (KeyCode::Esc, KeyModifiers::NONE, KeyEventKind::Press) => app.on_esc(),
+        (KeyCode::Tab, KeyModifiers::NONE, KeyEventKind::Press) => app.on_tab(),
+        _ => app.handle_text_edit_input(key.into()),
     }
 }
