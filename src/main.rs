@@ -6,9 +6,7 @@ mod crossterm;
 
 mod ui;
 
-mod profile_manager;
-
-mod github_integration;
+mod mod_operations;
 
 fn main() -> Result<(), Box<dyn Error>> {
     crate::crossterm::run()?;

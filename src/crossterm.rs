@@ -67,7 +67,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
 
 fn handle_normal_mode(app: &mut App, key_code: KeyCode) {
     match key_code {
-        // KeyCode::Enter => app.on_enter(),
+        KeyCode::Enter => app.on_enter(),
         KeyCode::Left => app.on_left(),
         KeyCode::Right => app.on_right(),
         KeyCode::Tab => app.on_tab(),
