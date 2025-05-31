@@ -1,0 +1,37 @@
+{
+  "name": "iridium",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tauri-apps/cli": "^2.5.0",
+    "@tsconfig/svelte": "^5.0.4",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "svelte-check": "^4.2.1",
+    "tailwindcss": "^3.4.17",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.5.0",
+    "@tauri-apps/plugin-opener": "^2.2.7",
+    "svelte": "^5.33.11"
+  }
+}

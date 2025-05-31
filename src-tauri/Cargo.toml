@@ -1,0 +1,28 @@
+[package]
+name = "iridium"
+version = "0.1.0"
+description = "Modern Ferium Mod Manager - A sleek desktop interface for managing Minecraft mods"
+authors = ["cnhornbeck"]
+license = "MIT"
+repository = "https://github.com/cnhornbeck/Iridium"
+default-run = "iridium"
+edition = "2021"
+rust-version = "1.60"
+
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "2.0", features = [] }
+tauri-plugin-log = "2.0"
+chrono = "0.4.38"
+arboard = "3.4.0"
+tokio = { version = "1", features = ["full"] }
+log = "0.4.27"
+regex = "1.10"
+
+[features]
+custom-protocol = [ "tauri/custom-protocol" ]

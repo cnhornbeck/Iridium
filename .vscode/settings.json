@@ -1,0 +1,33 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "tailwindCSS.includeLanguages": {
+    "css": "css"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.requireConfig": true,
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "tw`([^`]*)",
+      "`"
+    ],
+    [
+      "tw\\(([^)]*)",
+      "\\)"
+    ]
+  ],
+  "tailwindCSS.emmetCompletions": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.suggest.completeFunctionCalls": true,
+  "typescript.suggest.includeCompletionsForModuleExports": true,
+  "typescript.suggest.includeCompletionsWithInsertText": true,
+  "typescript.suggest.includeCompletionsWithSnippetText": true,
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+}
