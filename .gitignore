@@ -1,20 +1,30 @@
 # System files
 .DS_Store
 
-# Dependencies
+# IDE and Editor files
+.vscode/
+.idea/
+
+# Node.js dependencies
 node_modules/
 
-# Build artifacts
+# Node.js logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build artifacts and directories
+dist/
 /build
 /.svelte-kit
 /package
 target/
 debug/
 
-# Environment variables
-.env
-.env.*
-!.env.example
+# SvelteKit and Svelte specific
+.svelte-kit/
+.svelte/
 
 # Vite
 vite.config.js.timestamp-*
@@ -24,3 +34,11 @@ vite.config.ts.timestamp-*
 Cargo.lock
 **/*.rs.bk
 *.pdb
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Temporary files
+tmp/
