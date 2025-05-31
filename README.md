@@ -1,59 +1,111 @@
-# Iridium
+# Iridium 📦
 
-Iridium is a terminal-based user interface (TUI) written in Rust and designed to enhance the functionality of Ferium, the Minecraft mod manager. Iridium allows users to easily import and export large numbers of mods and create their own Iridium-based modpacks. This project aims to streamline the management of Minecraft mods through an intuitive TUI.
+A modern, sleek desktop interface for [Ferium](https://github.com/gorilla-devs/ferium) - the fast CLI Minecraft mod manager.
 
-## Features
+## ✨ Features
 
-- **Easy Import and Export:** Simplify the process of importing and exporting mods in bulk.
-- **Modpack Creation:** Create custom Iridium-based modpacks by reading from TXT and JSON files.
-- **User-Friendly Interface:** A terminal-based UI that enhances the usability of Ferium.
+- **Smart Import** - Add mods by name or ID
+- **One-Click Export** - Export your mod list to clipboard instantly
+- **Upgrade & Install** - Download and install all queued mods with a single button
+- **Fast & Responsive** - Built with Tauri for native performance
+- **Ferium Detection** - Automatically checks if Ferium is available
 
-## Installation
+## 🚀 Getting Started
 
-To get the latest version of Iridium, download it from the [Releases](https://github.com/cnhornbeck/Iridium/releases) page. You can also build it from source if you prefer:
+### Prerequisites
 
-1. **Clone the repository:**
+- **[Ferium](https://github.com/gorilla-devs/ferium)** must be installed and available in your PATH
+- **Node.js** (for development)
+- **Rust** (for development)
+
+### Installation
+
+#### Option 1: Download Release (Recommended)
+1. Go to [Releases](https://github.com/cnhornbeck/Iridium/releases)
+2. Download the latest `iridium.exe` for Windows
+3. Run the executable - no installation required!
+
+#### Option 2: Build from Source
 ```bash
-git clone https://github.com/cnhornbeck/iridium.git
-cd iridium
+# Clone the repository
+git clone https://github.com/cnhornbeck/Iridium.git
+cd Iridium
+
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run tauri:dev
+
+# Build for production
+npm run tauri:build
 ```
 
-2. **Build the project:**
-```bash
-cargo build --release
-```
-
-## Usage
-
-Once downloaded, open the application to begin. Below are some basic features:
+## 🎯 Usage
 
 ### Import Mods
+1. Switch to the **Import** tab
+2. Enter mod names or IDs (one per line) in the text area
+3. Click **Import Mods** to queue them with Ferium
+4. Click **🚀 Upgrade & Install Mods** to actually download and install
 
-To import mods, paste the mod IDs in the Import Input text box, with each mod ID separated by a new line. Then press `Ctrl+Enter` to submit the mods for download. Iridium will automatically run `ferium upgrade` after all provided mods have been imported.
+### Export Mods  
+1. Switch to the **Export** tab
+2. Click **Export Mod List**
+3. Your mod list is automatically copied to clipboard
 
-Example:
+### Example Mod Input
+```
+jei
+waystones
+iron-chests
+w7ThoJFB
+sodium
+```
 
-modid1\
-modid2\
-modid3\
-etc...
+## 🛠️ Tech Stack
 
-### Export Mods
+- **Frontend**: [Svelte](https://svelte.dev/) + [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Desktop Framework**: [Tauri](https://tauri.app/)
+- **Backend**: [Rust](https://www.rust-lang.org/)
+- **Mod Manager**: [Ferium](https://github.com/gorilla-devs/ferium)
 
-**TODO**
+## 🤝 Contributing
 
-### Create Iridium-based Modpack
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-**TODO**
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Contributing
+## 🐛 Troubleshooting
 
-Contributions are welcome! Please fork this repository and submit a pull request for any feature you want to add or any bug you want to fix.
+### "Ferium Not Found" Error
+- Ensure Ferium is installed: Visit [Ferium's installation guide](https://github.com/gorilla-devs/ferium#installation)
+- Verify Ferium is in your PATH by running `ferium --version` in terminal
+- Restart Iridium after installing Ferium
 
-## License
+### Import Issues
+- Make sure mod names/IDs are correct
+- Check your internet connection
+- Verify you have a Ferium profile set up
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+## 📄 License
 
-## Contact
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-For any questions or suggestions, please open an issue on this repository.
+## 🙏 Acknowledgments
+
+- **[Ferium](https://github.com/gorilla-devs/ferium)** - The powerful CLI mod manager that powers this interface
+- **[Tauri](https://tauri.app/)** - For making desktop app development with web technologies great
+- **[Svelte](https://svelte.dev/)** - For the reactive UI framework
+- **Minecraft Modding Community** - For creating amazing mods to manage
+
+## 🔗 Links
+
+- [Ferium GitHub](https://github.com/gorilla-devs/ferium)
+- [Report Issues](https://github.com/cnhornbeck/Iridium/issues)
+- [Request Features](https://github.com/cnhornbeck/Iridium/issues/new)
