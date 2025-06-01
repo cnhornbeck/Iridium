@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "iridium",
+  "productName": "Iridium",
   "version": "1.0.0",
   "identifier": "com.iridium.app",
   "build": {
