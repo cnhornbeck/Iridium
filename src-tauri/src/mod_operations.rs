@@ -140,17 +140,51 @@ pub async fn export_mods() -> Result<ExportResult, String> {
 
 #[command]
 pub async fn check_ferium_available() -> Result<bool, String> {
-    let mut cmd = Command::new("ferium");
+    // Try multiple possible locations for Ferium
+    let possible_commands = ["ferium", "ferium.exe"];
     
-    #[cfg(target_os = "windows")]
-    cmd.creation_flags(CREATE_NO_WINDOW);
-    
-    cmd.arg("--version");
+    for cmd_name in &possible_commands {
+        let mut cmd = Command::new(cmd_name);
+        
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(CREATE_NO_WINDOW);
+        
+        cmd.arg("--version");
 
-    match cmd.output() {
-        Ok(output) => Ok(output.status.success()),
-        Err(_) => Ok(false),
+        if let Ok(output) = cmd.output() {
+            if output.status.success() {
+                return Ok(true);
+            }
+        }
     }
+    
+    // Also try common installation paths
+    #[cfg(target_os = "windows")]
+    {
+        let common_paths = [
+            "C:\\Users\\%USERNAME%\\.cargo\\bin\\ferium.exe",
+            "C:\\Program Files\\Ferium\\ferium.exe",
+            "%USERPROFILE%\\.cargo\\bin\\ferium.exe",
+        ];
+        
+        for path in &common_paths {
+            let expanded_path = std::env::var("USERPROFILE")
+                .map(|user_profile| path.replace("%USERPROFILE%", &user_profile))
+                .unwrap_or_else(|_| path.to_string());
+            
+            let mut cmd = Command::new(&expanded_path);
+            cmd.creation_flags(CREATE_NO_WINDOW);
+            cmd.arg("--version");
+            
+            if let Ok(output) = cmd.output() {
+                if output.status.success() {
+                    return Ok(true);
+                }
+            }
+        }
+    }
+    
+    Ok(false)
 }
 
 #[command]
